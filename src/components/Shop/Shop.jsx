@@ -3,26 +3,23 @@ import { addToDb, deleteShoppingCart, getShoppingCart } from '../../utilities/fa
 import Cart from '../Cart/Cart';
 import Product from '../Product/Product';
 import './Shop.css';
-import { Link, useLoaderData } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const Shop = () => {
     const [products, setProducts] = useState([]);
-    const [cart, setCart] = useState([]);
-    const [currentPage, setCurrentPage] = useState(0)
-    const [itemsPerPage, setItemsPerPage] = useState(10)
-    const { count } = useLoaderData();
-    // console.log(count);
+    const [cart, setCart] = useState([]); // Initialize cart state
+    const [currentPage, setCurrentPage] = useState(0);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const [count, setCount] = useState(0);
 
     const numberOfPages = Math.ceil(count / itemsPerPage);
-
-    // const pages = []
-    // for(let i =0; i< numberOfPages; i++){
-    //     pages.push(i)
-    // }
-    // console.log(pages);
-
-    // const pages = [...Array(numberOfPages).keys()]
     const pages = [...Array(numberOfPages).keys()];
+
+    useEffect(() => {
+        fetch('http://localhost:4000/productsCount')
+            .then(res => res.json())
+            .then(data => setCount(data.count))
+    }, []);
 
     useEffect(() => {
         fetch(`http://localhost:4000/products?page=${currentPage}&size=${itemsPerPage}`)
@@ -30,45 +27,16 @@ const Shop = () => {
             .then(data => setProducts(data))
     }, [currentPage, itemsPerPage]);
 
-    useEffect(() => {
-        const storedCart = getShoppingCart();
-        const savedCart = [];
-        // step 1: get id of the addedProduct
-        for (const id in storedCart) {
-            // step 2: get product from products state by using id
-            const addedProduct = products.find(product => product._id === id)
-            if (addedProduct) {
-                // step 3: add quantity
-                const quantity = storedCart[id];
-                addedProduct.quantity = quantity;
-                // step 4: add the added product to the saved cart
-                savedCart.push(addedProduct);
-            }
-            // console.log('added Product', addedProduct)
-        }
-        // step 5: set the cart
-        setCart(savedCart);
-    }, [products])
-
     const handleAddToCart = (product) => {
-        // cart.push(product); '
-        let newCart = [];
-        // const newCart = [...cart, product];
-        // if product doesn't exist in the cart, then set quantity = 1
-        // if exist update quantity by 1
         const exists = cart.find(pd => pd._id === product._id);
         if (!exists) {
             product.quantity = 1;
-            newCart = [...cart, product]
-        }
-        else {
+            setCart([...cart, product]);
+        } else {
             exists.quantity = exists.quantity + 1;
-            const remaining = cart.filter(pd => pd._id !== product._id);
-            newCart = [...remaining, exists];
+            setCart([...cart]);
         }
-
-        setCart(newCart);
-        addToDb(product._id)
+        addToDb(product._id);
     }
 
     const handleClearCart = () => {
@@ -78,20 +46,19 @@ const Shop = () => {
 
     const handleItemsPerPage = e => {
         const val = parseInt(e.target.value);
-        console.log(val);
         setItemsPerPage(val);
         setCurrentPage(0);
     }
 
-    const handlePrev = () =>{
-        if (currentPage > 0){
+    const handlePrevPage = () => {
+        if (currentPage > 0) {
             setCurrentPage(currentPage - 1);
         }
     }
 
-    const handleNext = () =>{
-        if(currentPage < pages.length - 1){
-            setCurrentPage(currentPage + 1)
+    const handleNextPage = () => {
+        if (currentPage < pages.length - 1) {
+            setCurrentPage(currentPage + 1);
         }
     }
 
@@ -117,24 +84,22 @@ const Shop = () => {
                 </Cart>
             </div>
             <div className='pagination'>
-                <p>currentPage:{currentPage}</p>
-                <button onClick={handlePrev}>prev</button>
+                <p>Current page: {currentPage}</p>
+                <button onClick={handlePrevPage}>Prev</button>
                 {
-                     pages.map(page => <button 
-                        className={currentPage === page && 'selected'}
+                    pages.map(page => <button
+                        className={currentPage === page ? 'selected' : undefined}
                         onClick={() => setCurrentPage(page)}
-                        key={page}>{page}</button>)
-
-                 }
-                 <button onClick={handleNext}>next</button>
-                 
-                 <select value={itemsPerPage} onChange={handleItemsPerPage} name="" id="">
+                        key={page}
+                    >{page}</button>)
+                }
+                <button onClick={handleNextPage}>Next</button>
+                <select value={itemsPerPage} onChange={handleItemsPerPage} name="" id="">
                     <option value="5">5</option>
                     <option value="10">10</option>
                     <option value="20">20</option>
                     <option value="50">50</option>
-                 </select>
-            
+                </select>
             </div>
         </div>
     );

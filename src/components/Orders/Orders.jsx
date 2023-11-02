@@ -6,12 +6,13 @@ import './Orders.css';
 import { deleteShoppingCart, removeFromDb } from '../../utilities/fakedb';
 
 const Orders = () => {
+    
     const savedCart = useLoaderData();
     const [cart, setCart] = useState(savedCart);
 
     const handleRemoveFromCart = (id) => {
         const remaining = cart.filter(product => product._id !== id);
-        console.log(cart, id)
+        console.log(cart, id);
         setCart(remaining);
         removeFromDb(id);
     }
@@ -35,8 +36,7 @@ const Orders = () => {
             <div className='cart-container'>
                 <Cart
                     cart={cart}
-                    handleClearCart={handleClearCart}
-                >
+                    handleClearCart={handleClearCart}>
                     <Link className='proceed-link' to="/checkout">
                         <button className='btn-proceed'>Proceed Checkout</button>
                     </Link>
